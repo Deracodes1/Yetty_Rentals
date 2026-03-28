@@ -8,6 +8,7 @@ import { Request, Response, NextFunction } from 'express';
 @Injectable()
 export class AuthMiddleware implements NestMiddleware {
   use(req: Request, res: Response, next: NextFunction) {
+    console.log('this request is tracked by auth middleware');
     const authHeader = req.headers.authorization;
     // checking if authorization header exists. procced with code
     //  execution if it does, throw an error if it does not and

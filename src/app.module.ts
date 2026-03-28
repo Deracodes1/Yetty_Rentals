@@ -11,6 +11,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { LoggerMiddleware } from './middlewares/logger/logger.middleware';
 import { UsersModule } from './users/users.module';
+import { AuthMiddleware } from './middlewares/auth/auth.middleware';
 
 @Module({
   imports: [
@@ -43,5 +44,23 @@ export class AppModule implements NestModule {
     consumer
       .apply(LoggerMiddleware)
       .forRoutes({ path: '*', method: RequestMethod.ALL });
+    consumer.apply(AuthMiddleware).forRoutes(
+      {
+        path: 'auth/register',
+        method: RequestMethod.DELETE,
+      },
+      {
+        path: 'auth',
+        method: RequestMethod.POST,
+      },
+      {
+        path: 'product/:id',
+        method: RequestMethod.PATCH,
+      },
+      {
+        path: 'users',
+        method: RequestMethod.GET,
+      },
+    );
   }
 }
