@@ -12,6 +12,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { LoggerMiddleware } from './middlewares/logger/logger.middleware';
 import { UsersModule } from './users/users.module';
 import { AuthMiddleware } from './middlewares/auth/auth.middleware';
+import { EquipmentModule } from './equipment/equipment.module';
+import { BookingModule } from './booking/booking.module';
 
 @Module({
   imports: [
@@ -35,6 +37,8 @@ import { AuthMiddleware } from './middlewares/auth/auth.middleware';
       }),
     }),
     UsersModule,
+    EquipmentModule,
+    BookingModule,
   ],
   controllers: [AppController],
   providers: [AppService],
