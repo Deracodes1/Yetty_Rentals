@@ -1,14 +1,18 @@
 import {
   Column,
   CreateDateColumn,
+  ManyToOne,
   UpdateDateColumn,
   Entity,
   PrimaryGeneratedColumn,
+  OneToMany,
 } from 'typeorm';
+import { Booking } from '../../booking/entities/booking.entity';
+import { User } from '../../users/entities/user.entity';
 
 @Entity()
 export class Equipment {
-  @PrimaryGeneratedColumn()
+  @PrimaryGeneratedColumn('uuid') // Matches User/Booking UUID style
   id!: string;
 
   @Column()
@@ -20,9 +24,16 @@ export class Equipment {
   @Column()
   type!: string;
 
+  // FIX: Change from Column string to ManyToOne relationship
+  @ManyToOne(() => User, (user) => user.equipmentUploads)
+  uploadedBy!: User;
+
+  @OneToMany(() => Booking, (booking) => booking.equipment)
+  bookings!: Booking[];
+
   @CreateDateColumn()
   createdAt!: Date;
 
   @UpdateDateColumn()
-  updatedAt!: string;
+  updatedAt!: Date;
 }

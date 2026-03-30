@@ -1,34 +1,53 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+// equipment.controller.ts
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Body,
+  Param,
+  UseGuards,
+} from '@nestjs/common';
 import { EquipmentService } from './equipment.service';
 import { CreateEquipmentDto } from './dto/create-equipment.dto';
+import { JwtAuthGuard } from '../guards/jwt-auth-guard/jwt-auth-guard';
+import { RolesGuard } from '../guards/role-guard/role-guard';
+import { Roles } from '../decorators/roles.decorator';
+import { GetUser } from '../decorators/get-user.decorator';
+import { User } from '../users/entities/user.entity';
 import { UpdateEquipmentDto } from './dto/update-equipment.dto';
 
 @Controller('equipment')
+@UseGuards(JwtAuthGuard, RolesGuard) // All routes require login + Role check
 export class EquipmentController {
   constructor(private readonly equipmentService: EquipmentService) {}
 
   @Post()
-  create(@Body() createEquipmentDto: CreateEquipmentDto) {
-    return this.equipmentService.create(createEquipmentDto);
+  @Roles('admin') // Only Admins can hit this
+  create(@Body() dto: CreateEquipmentDto, @GetUser() user: User) {
+    return this.equipmentService.create(dto, user);
   }
 
-  @Get()
+  @Get() // Any authenticated user
   findAll() {
     return this.equipmentService.findAll();
   }
 
-  @Get(':id')
+  @Get(':id') // Any authenticated user
   findOne(@Param('id') id: string) {
-    return this.equipmentService.findOne(+id);
+    return this.equipmentService.findOne(id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateEquipmentDto: UpdateEquipmentDto) {
-    return this.equipmentService.update(+id, updateEquipmentDto);
+  @Roles('admin')
+  update(@Param('id') id: string, @Body() dto: UpdateEquipmentDto) {
+    return this.equipmentService.update(id, dto);
   }
 
   @Delete(':id')
+  @Roles('admin')
   remove(@Param('id') id: string) {
-    return this.equipmentService.remove(+id);
+    return this.equipmentService.remove(id);
   }
 }

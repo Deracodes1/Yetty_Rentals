@@ -3,8 +3,11 @@ import {
   Entity,
   PrimaryGeneratedColumn,
   CreateDateColumn,
+  OneToMany,
   UpdateDateColumn,
 } from 'typeorm';
+import { Booking } from '../../booking/entities/booking.entity';
+import { Equipment } from '../../equipment/entities/equipment.entity';
 
 @Entity()
 export class User {
@@ -31,4 +34,10 @@ export class User {
 
   @UpdateDateColumn()
   updatedAt!: Date;
+
+  @OneToMany(() => Equipment, (Equipment) => Equipment.uploadedBy)
+  equipmentUploads!: Equipment[]; // for admins, to see equipmet that was uploaded by an admin
+
+  @OneToMany(() => Booking, (Booking) => Booking.bookedBy)
+  bookings!: Booking[]; // for users, to see bookings history made by a user
 }
