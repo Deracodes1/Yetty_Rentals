@@ -15,11 +15,13 @@ import { CreateBookingDto } from './dto/create-booking.dto';
 import { UpdateBookingDto } from './dto/update-booking.dto';
 import { User } from '../users/entities/user.entity';
 import { GetUser } from '../decorators/get-user.decorator';
+import { RolesGuard } from '../guards/role-guard/role-guard';
 @Controller('bookings')
 @UseGuards(JwtAuthGuard)
 export class BookingController {
   constructor(private readonly bookingService: BookingService) {}
 
+  @UseGuards(RolesGuard)
   @Post()
   async create(
     @Body() createBookingDto: CreateBookingDto,
