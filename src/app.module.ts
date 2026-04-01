@@ -14,9 +14,11 @@ import { UsersModule } from './users/users.module';
 import { AuthMiddleware } from './middlewares/auth/auth.middleware';
 import { EquipmentModule } from './equipment/equipment.module';
 import { BookingModule } from './booking/booking.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
+    ScheduleModule.forRoot(),
     AuthModule,
     //laoding the config servcie and making it avialable in the whole app
     ConfigModule.forRoot({

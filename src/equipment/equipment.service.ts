@@ -22,8 +22,26 @@ export class EquipmentService {
     return await this.repo.save(equipment);
   }
 
-  async findAll() {
-    return await this.repo.find({ relations: ['uploadedBy'] });
+  // equipment.service.ts
+  async findAll(page: number, limit: number) {
+    const [items, total] = await this.repo.findAndCount({
+      skip: (page - 1) * limit,
+      take: limit,
+      relations: ['uploadedBy'],
+      order: { createdAt: 'DESC' },
+    });
+
+    return {
+      data: items,
+      pagination: {
+        total,
+        page,
+        limit,
+        lastPage: Math.ceil(total / limit),
+        hasNextPage: page < Math.ceil(total / limit),
+        hasPrevPage: page > 1,
+      },
+    };
   }
 
   async findOne(id: string) {

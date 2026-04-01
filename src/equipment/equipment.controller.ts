@@ -1,6 +1,7 @@
 // equipment.controller.ts
 import {
   Controller,
+  Query,
   Get,
   Post,
   Patch,
@@ -29,9 +30,14 @@ export class EquipmentController {
     return this.equipmentService.create(dto, user);
   }
 
-  @Get() // Any authenticated user
-  findAll() {
-    return this.equipmentService.findAll();
+  // authenticated user
+  @Get()
+  async findAll(
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 10,
+  ) {
+    // Ensure we are passing numbers to the service
+    return this.equipmentService.findAll(page, limit);
   }
 
   @Get(':id') // Any authenticated user

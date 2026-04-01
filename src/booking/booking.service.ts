@@ -7,10 +7,11 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from '../users/entities/user.entity';
-import { Booking } from './entities/booking.entity';
-import { Repository, MoreThan } from 'typeorm';
 import { CreateBookingDto } from './dto/create-booking.dto';
-// booking.service.ts
+import { Repository, Between, MoreThan } from 'typeorm';
+import { Booking, BookingStatus } from './entities/booking.entity';
+import { Cron, CronExpression } from '@nestjs/schedule';
+import { LessThan, FindOptionsWhere } from 'typeorm';
 @Injectable()
 export class BookingService {
   constructor(
@@ -41,21 +42,53 @@ export class BookingService {
     return await this.bookingRepo.save(newBooking);
   }
   // GET ALL (Filtered by Role)
-  async findAll(user: User) {
+  async findAll(
+    user: User,
+    page: number = 1,
+    limit: number = 10,
+    filters?: { status?: BookingStatus; startDate?: string; userId?: string },
+  ) {
     const isAdmin = user.role === 'admin';
+    const skip = (page - 1) * limit;
 
-    return await this.bookingRepo.find({
-      // 1. Filter: If not admin, only show user's bookings
-      where: isAdmin ? {} : { bookedBy: { id: user.id } },
+    // 1. Dynamic Where Clause
+    const whereCondition: FindOptionsWhere<Booking> = {};
 
-      // 2. The N+1 Fix: Join these tables immediately
+    if (!isAdmin) {
+      whereCondition.bookedBy = { id: user.id };
+    } else if (filters?.userId) {
+      whereCondition.bookedBy = { id: filters.userId };
+    }
+
+    if (filters?.status) {
+      whereCondition.status = filters.status;
+    }
+
+    if (filters?.startDate) {
+      const dayStart = new Date(filters.startDate);
+      dayStart.setHours(0, 0, 0, 0);
+      const dayEnd = new Date(filters.startDate);
+      dayEnd.setHours(23, 59, 59, 999);
+      whereCondition.startDate = Between(dayStart, dayEnd);
+    }
+
+    // 2. Combined Execution
+    const [data, total] = await this.bookingRepo.findAndCount({
+      where: whereCondition,
+      skip,
+      take: limit,
+      order: { startDate: 'DESC' },
       relations: {
         equipment: true,
         bookedBy: true,
       },
-
-      // 3. Select only needed fields (Optional, for performance)
+      // Keeping the select strict to avoid over-fetching sensitive data
       select: {
+        id: true,
+        startDate: true,
+        endDate: true,
+        status: true,
+        updatedAt: true,
         bookedBy: {
           id: true,
           name: true,
@@ -65,9 +98,24 @@ export class BookingService {
           id: true,
           name: true,
           rentingPrice: true,
+          type: true,
         },
       },
     });
+
+    const lastPage = Math.ceil(total / limit);
+
+    return {
+      data,
+      pagination: {
+        total,
+        page,
+        limit,
+        lastPage,
+        hasNextPage: page < lastPage,
+        hasPrevPage: page > 1,
+      },
+    };
   }
 
   // GET ONE (Ownership Protected)
@@ -79,13 +127,28 @@ export class BookingService {
 
     if (!booking) throw new NotFoundException();
 
-    // Check if user is Admin OR the owner
+    // Check ownership
     if (user.role !== 'admin' && booking.bookedBy.id !== user.id) {
-      throw new ForbiddenException('Access denied');
+      throw new ForbiddenException();
     }
+
+    // AUTO-UPDATE check
+    return await this.checkAndAutoUpdateStatus(booking);
+  }
+  private async checkAndAutoUpdateStatus(booking: Booking): Promise<Booking> {
+    const now = new Date();
+
+    // If the date has passed but status is still 'confirmed' or 'pending'
+    if (
+      new Date(booking.endDate) < now &&
+      booking.status !== BookingStatus.COMPLETED
+    ) {
+      booking.status = BookingStatus.COMPLETED;
+      return await this.bookingRepo.save(booking);
+    }
+
     return booking;
   }
-
   // PATCH (Ownership + Date Protected)
   async update(id: string, updateDto: any, user: User) {
     const booking = await this.findOne(id, user);
@@ -95,6 +158,32 @@ export class BookingService {
     }
 
     Object.assign(booking, updateDto);
+    return await this.bookingRepo.save(booking);
+  }
+  // booking.service.ts
+
+  async updateStatus(id: string, newStatus: BookingStatus, user: User) {
+    const booking = await this.findOne(id, user); // Reuses our ownership/admin check
+
+    // Business Logic: Define allowed transitions
+    const now = new Date();
+
+    if (
+      newStatus === BookingStatus.COMPLETED &&
+      new Date(booking.endDate) > now
+    ) {
+      throw new BadRequestException(
+        'Cannot mark as completed before the end date has passed.',
+      );
+    }
+
+    if (booking.status === BookingStatus.CANCELLED) {
+      throw new BadRequestException(
+        'Cannot update a booking that is already cancelled.',
+      );
+    }
+
+    booking.status = newStatus;
     return await this.bookingRepo.save(booking);
   }
 
@@ -107,5 +196,25 @@ export class BookingService {
     }
 
     return await this.bookingRepo.remove(booking);
+  }
+
+  @Cron(CronExpression.EVERY_HOUR)
+  async handleAutoCompletion() {
+    const now = new Date();
+
+    // Bulk update: find confirmed bookings where endDate is in the past
+    const result = await this.bookingRepo.update(
+      {
+        status: BookingStatus.CONFIRMED,
+        endDate: LessThan(now),
+      },
+      {
+        status: BookingStatus.COMPLETED,
+      },
+    );
+
+    if (result.affected && result.affected > 0) {
+      console.log(`[Cron] Auto-completed ${result.affected} bookings.`);
+    }
   }
 }
