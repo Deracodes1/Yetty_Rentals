@@ -24,7 +24,6 @@ export class Equipment {
   @Column()
   type!: string;
 
-  // FIX: Change from Column string to ManyToOne relationship
   @ManyToOne(() => User, (user) => user.equipmentUploads)
   uploadedBy!: User;
 

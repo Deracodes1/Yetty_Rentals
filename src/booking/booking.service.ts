@@ -127,28 +127,24 @@ export class BookingService {
 
     if (!booking) throw new NotFoundException();
 
-    // Check ownership
     if (user.role !== 'admin' && booking.bookedBy.id !== user.id) {
       throw new ForbiddenException();
     }
 
-    // AUTO-UPDATE check
-    return await this.checkAndAutoUpdateStatus(booking);
-  }
-  private async checkAndAutoUpdateStatus(booking: Booking): Promise<Booking> {
+    // Check if we actually NEED to update before calling the database again
     const now = new Date();
-
-    // If the date has passed but status is still 'confirmed' or 'pending'
     if (
       new Date(booking.endDate) < now &&
       booking.status !== BookingStatus.COMPLETED
     ) {
       booking.status = BookingStatus.COMPLETED;
+
       return await this.bookingRepo.save(booking);
     }
 
     return booking;
   }
+
   // PATCH (Ownership + Date Protected)
   async update(id: string, updateDto: any, user: User) {
     const booking = await this.findOne(id, user);

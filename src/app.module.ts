@@ -35,7 +35,7 @@ import { ScheduleModule } from '@nestjs/schedule';
         password: configService.get<string>('DATABASE_PASSWORD'),
         database: configService.get<string>('DATABASE_DATABASE'),
         autoLoadEntities: true, //this finds my entities automatically in ts so i don't list em manaually
-        synchronize: true, // only in development. will remove in production
+        // synchronize: true, // only in development. will remove in production
       }),
     }),
     UsersModule,

@@ -26,8 +26,8 @@ export class EquipmentController {
 
   @Post()
   @Roles('admin') // Only Admins can hit this
-  create(@Body() dto: CreateEquipmentDto, @GetUser() user: User) {
-    return this.equipmentService.create(dto, user);
+  async create(@Body() dto: CreateEquipmentDto, @GetUser() user: User) {
+    return await this.equipmentService.create(dto, user);
   }
 
   // authenticated user
@@ -37,23 +37,23 @@ export class EquipmentController {
     @Query('limit') limit: number = 10,
   ) {
     // Ensure we are passing numbers to the service
-    return this.equipmentService.findAll(page, limit);
+    return await this.equipmentService.findAll(page, limit);
   }
 
   @Get(':id') // Any authenticated user
-  findOne(@Param('id') id: string) {
-    return this.equipmentService.findOne(id);
+  async findOne(@Param('id') id: string) {
+    return await this.equipmentService.findOne(id);
   }
 
   @Patch(':id')
   @Roles('admin')
-  update(@Param('id') id: string, @Body() dto: UpdateEquipmentDto) {
-    return this.equipmentService.update(id, dto);
+  async update(@Param('id') id: string, @Body() dto: UpdateEquipmentDto) {
+    return await this.equipmentService.update(id, dto);
   }
 
   @Delete(':id')
   @Roles('admin')
-  remove(@Param('id') id: string) {
-    return this.equipmentService.remove(id);
+  async remove(@Param('id') id: string) {
+    return await this.equipmentService.remove(id);
   }
 }
