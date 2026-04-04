@@ -26,7 +26,10 @@ async function bootstrap() {
       'THE OFFICIAL DOCUMENTATION FOR YETTY RENTALS: This api powers the equipment rentals/management service.',
     )
     .setVersion('1.0')
-    .addTag('yetty')
+    .addTag(
+      'Available Endpoints with expected response formats, expected DTOs and Schema structures',
+    )
+    .addBearerAuth()
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
@@ -36,3 +39,7 @@ bootstrap().catch((err) => {
   console.error('Error during bootstrap:', err);
   process.exit(1);
 });
+
+//helper for adding name to my migration file when generating
+//npm run migration:generate -- src/db/migrations/TestMigration
+// note: replace TestMigration with the name i want to name the file

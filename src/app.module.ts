@@ -36,6 +36,11 @@ import { ScheduleModule } from '@nestjs/schedule';
         database: configService.get<string>('DATABASE_DATABASE'),
         autoLoadEntities: true, //this finds my entities automatically in ts so i don't list em manaually
         // synchronize: true, // only in development. will remove in production
+        extra: {
+          max: 20, // Increase the maximum number of clients in the pool
+          idleTimeoutMillis: 30000,
+          connectionTimeoutMillis: 2000,
+        },
       }),
     }),
     UsersModule,

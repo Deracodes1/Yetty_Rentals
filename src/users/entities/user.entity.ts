@@ -35,6 +35,9 @@ export class User {
   @UpdateDateColumn()
   updatedAt!: Date;
 
+  @Column({ nullable: true })
+  test_column!: string;
+
   @OneToMany(() => Equipment, (Equipment) => Equipment.uploadedBy)
   equipmentUploads!: Equipment[]; // for admins, to see equipmet that was uploaded by an admin
 
