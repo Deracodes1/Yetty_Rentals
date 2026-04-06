@@ -2,6 +2,7 @@ import { UsersService } from './../users/users.service';
 import {
   ConflictException,
   Injectable,
+  // NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
@@ -40,11 +41,15 @@ export class AuthService {
 
   async login(dto: loginDto) {
     const { email, password } = dto;
-
+    console.log(dto);
+    console.log(email, password);
     // find user in postgres
     const user = await this.usersService.findByEmail(email as string);
     if (!user) throw new UnauthorizedException('incorrect email or password');
-
+    // if (dto) {
+    //   throw new NotFoundException('request ended for debugging');
+    // }
+    console.log(user);
     // compare hashed password with user password
     const isMatch = await bcrypt.compare(password as string, user.password);
     if (!isMatch)
