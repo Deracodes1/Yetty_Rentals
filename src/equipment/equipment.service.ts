@@ -20,6 +20,7 @@ export class EquipmentService {
       uploadedBy: admin, // Links the admin who uploaded it
     });
     return await this.repo.save(equipment);
+    //  'Equipment uploaded sucessfully';
   }
 
   // equipment.service.ts

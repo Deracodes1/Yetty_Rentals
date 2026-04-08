@@ -4,30 +4,26 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
-
 @Injectable()
 export class AuthMiddleware implements NestMiddleware {
   use(req: Request, res: Response, next: NextFunction) {
-    console.log('this request is tracked by auth middleware');
     const authHeader = req.headers.authorization;
-    // checking if authorization header exists. procced with code
-    //  execution if it does, throw an error if it does not and
-    // terminate the request
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+
+    // 1. Unified check: Must exist, start with Bearer, and have a non-empty string after it
+    if (!authHeader?.startsWith('Bearer ')) {
       throw new UnauthorizedException(
-        'authentication token missing or expired',
+        'Authentication token missing or invalid format',
       );
     }
-    // parsing out the token from the req header
-    const token = authHeader.split(' ')[1]; //
-    // checking if token exists
+
+    const token = authHeader.split(' ')[1];
+
     if (!token) {
       throw new UnauthorizedException('Token not found');
     }
 
-    // attaching the token to the request for later use
+    // 2. Attach for the next layers (Guards/Controllers)
     req['access_token'] = token;
-
     next();
   }
 }

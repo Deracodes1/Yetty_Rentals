@@ -55,23 +55,16 @@ export class AppModule implements NestModule {
     consumer
       .apply(LoggerMiddleware)
       .forRoutes({ path: '*', method: RequestMethod.ALL });
-    consumer.apply(AuthMiddleware).forRoutes(
-      {
-        path: 'auth/register',
-        method: RequestMethod.DELETE,
-      },
-      {
-        path: 'auth',
-        method: RequestMethod.POST,
-      },
-      {
-        path: 'product/:id',
-        method: RequestMethod.PATCH,
-      },
-      {
-        path: 'users',
-        method: RequestMethod.GET,
-      },
-    );
+    consumer
+      .apply(AuthMiddleware)
+      .exclude(
+        // 1. Exclude Registration/Login (Public)
+        { path: 'auth/register', method: RequestMethod.POST },
+        { path: 'auth/login', method: RequestMethod.POST },
+        // 2. Add any other public routes here
+        { path: 'health', method: RequestMethod.GET },
+      )
+      // 3. Apply to everything else
+      .forRoutes('*');
   }
 }

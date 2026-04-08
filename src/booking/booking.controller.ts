@@ -65,7 +65,6 @@ export class BookingController {
   ) {
     return this.bookingService.update(id, updateBookingDto, user);
   }
-  // booking.controller.ts
 
   @Patch(':id/status')
   async updateStatus(
